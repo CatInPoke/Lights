@@ -1,44 +1,46 @@
 from tkinter import *
 
-rectWidth = 30      #Ширина квадрата
-widthOfField = 21   #Ширина поля
-heightOfField = 16  #Высота поля
-step = 0            #Номер шага для отрисовки машинок
-root = Tk()         #Переменная окна
+rectWidth = 30      #РЁРёСЂРёРЅР° РѕРґРЅРѕРіРѕ РєРІР°РґСЂР°С‚Р°
+widthOfField = 21   #РЁРёСЂРёРЅР° РїРѕР»СЏ (РІ РєРІР°РґСЂР°С‚Р°С…)
+heightOfField = 16  #Р’С‹СЃРѕС‚Р° РїРѕР»СЏ
+step = 0            #РќРѕРјРµСЂ С‚РµРєСѓС‰РµРіРѕ РјРѕРјРµРЅС‚Р° РІСЂРµРјРµРЅРё
+root = Tk()         #РџРµСЂРµРјРµРЅРЅР°СЏ РѕРєРЅР°
 root.title("Traffic ligths")
 c = Canvas(root, width = widthOfField*rectWidth, height = heightOfField*rectWidth, bg = "white")
 
-    #Функции, возвращающие номер столбца и номер строки по номеру ячейки
+    #Р¤СѓРЅРєС†РёСЏ, РІРѕР·РІСЂР°С‰Р°СЋС‰Р°СЏ СЃС‚СЂРѕРєСѓ СЏС‡РµР№РєРё РїРѕ РµРµ РЅРѕРјРµСЂСѓ
 def getRow(cell): 
     return cell // land.width
-
+    
+    #Р¤СѓРЅРєС†РёСЏ, РІРѕР·РІСЂР°С‰Р°СЋС‰Р°СЏ СЃС‚РѕР»Р±РµС† СЏС‡РµР№РєРё РїРѕ РµРµ РЅРѕРјРµСЂСѓ
 def getColumn(cell):
     return cell - land.width * getRow(cell)
 
-    #Функция, рисующая квадрат заданного цвета в заданной ячейке
-def drawSquare(column, row, suqareColour):
-    c.create_rectangle(column*rectWidth, row*rectWidth, (column+1)*rectWidth, (row+1)*rectWidth, fill = suqareColour)
+    #Р¤СѓРЅРєС†РёСЏ, СЂРёСЃСѓСЋС‰Р°СЏ РєРІР°РґСЂР°С‚С‹
+def drawSquare(column, row, suqareColour, _tag = ''):
+    c.create_rectangle(column*rectWidth, row*rectWidth, (column+1)*rectWidth, (row+1)*rectWidth, fill = suqareColour, tag = _tag)
     return
 
-    #Обработчик события
+    #РћР±СЂР°Р±РѕС‚С‡РёРє РЅР°Р¶Р°С‚РёСЏ
 def onClick(event):
     global step
     if step < 20:
         animateCarsMoving(moveTable.table)
         step += 1
 
-    #Движение машинок
+    #Р¤СѓРЅРєС†РёСЏ, РѕС‚СЂРёСЃРѕРІС‹РІР°СЋС‰Р°СЏ РґРІРёР¶РµРЅРёРµ РјР°С€РёРЅ
 def animateCarsMoving(moveTable):
     for i in range(len(moveTable)):
             currentCell = moveTable[i][step]
             nextCell = moveTable[i][step+1]
             if nextCell != 0:
-                drawSquare(getColumn(currentCell), getRow(currentCell), "green")
-                drawSquare(getColumn(nextCell), getRow(nextCell), "blue")
+                c.move('car' + str(i), (getColumn(nextCell) - getColumn(currentCell)) * rectWidth, (getRow(nextCell) - getRow(currentCell)) * rectWidth)
+            else:
+                c.delete('car' + str(i))
 
 def checkSpeed(currentSpeed, currentRow, currentColumn):
     if car.turning:
-    #Проверка попадания на перекресток
+    #РџСЂРѕРІРµСЂРєР° РїРѕРїР°РґР°РЅРёСЏ РЅР° РїРµСЂРµРєСЂРµСЃС‚РѕРє
         if land.table[currentRow][currentColumn + currentSpeed][2] == 3 and currentColumn < car.destinationColumn:
             return 1
         if land.table[currentRow][currentColumn - currentSpeed][2] == 3 and currentColumn > car.destinationColumn:
@@ -47,34 +49,38 @@ def checkSpeed(currentSpeed, currentRow, currentColumn):
             return 1
         if land.table[currentRow - currentSpeed][currentColumn][2] == 3 and currentRow > car.destinationRow:
             return 1
-    #Проверка выхода с перекрестка
+    #РџСЂРѕРІРµСЂРєР° РІС‹С…РѕРґР° СЃ РїРµСЂРµРєСЂРµСЃС‚РєР°
         if currentSpeed != car.speed:
-            if land.table[currentRow][currentColumn + currentSpeed][2] == 2 and currentColumn > car.destinationColumn:
+            if land.table[currentColumn - currentSpeed][currentRow][2] == 2 and currentColumn > car.destinationColumn:
                 return car.speed
-            if land.table[currentRow][currentColumn - currentSpeed][2] == 2 and currentColumn < car.destinationColumn:
+            if land.table[currentColumn + currentSpeed][currentRow][2] == 2 and currentColumn < car.destinationColumn:
                 return car.speed
-            if land.table[currentRow + currentSpeed][currentColumn][2] == 1 and currentRow < car.destinationRow:
+            if land.table[currentColumn][currentRow + currentSpeed][2] == 1 and currentRow < car.destinationRow:
                 return car.speed
-            if land.table[currentRow - currentSpeed][currentColumn][2] == 1 and currentRow > car.destinationRow:
+            if land.table[currentColumn][currentRow - currentSpeed][2] == 1 and currentRow > car.destinationRow:
                 return car.speed
     return currentSpeed
 
 class Car:
     
     currentPoint = 0
-    #Конструктор
+    #РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
     def __init__(self, initialPoint, destination, speed):
-        #Начальная точка
+        #РќР°С‡Р°Р»СЊРЅР°СЏ С‚РѕС‡РєР°
         self.initialPoint = initialPoint
         currentPoint = initialPoint
-        #Цель
+        #Р¦РµР»СЊ
         self.destination = destination
-        #Скорость
+        #РЎРєРѕСЂРѕСЃС‚СЊ
         self.speed = speed
-        #Будет ли машина поворачивать на перекрестке
+        #Р‘СѓРґРµС‚ Р»Рё РјР°С€РёРЅР° РїРѕРІРѕСЂР°С‡РёРІР°С‚СЊ РЅР° РїРµСЂРµРєСЂРµСЃС‚РєРµ
         self.turning = 0
+        #РџРѕРІРµСЂРЅСѓР»Р° Р»Рё РјР°С€РёРЅР° СѓР¶Рµ
+        self.turned = 0
+        #Р”РѕСЃС‚РёРіРЅСѓС‚Р° Р»Рё С†РµР»РµРІР°СЏ СЏС‡РµР№РєР°
+        self.achieved = 0
     
-    #Функция приблизительного подсчета необходимого времени (количество столбцов в таблице движения)
+    #Р¤СѓРЅРєС†РёСЏ РїСЂРёР±Р»РёР·РёС‚РµР»СЊРЅРѕРіРѕ РїРѕРґСЃС‡РµС‚Р° РЅРµРѕР±С…РѕРґРёРјРѕРіРѕ РІСЂРµРјРµРЅРё (РєРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚РѕР»Р±С†РѕРІ РІ С‚Р°Р±Р»РёС†Рµ РґРІРёР¶РµРЅРёСЏ)
     def calculateTime(self):
         self.initialRow = getRow(self.initialPoint)
         self.initialColumn = getColumn(self.initialPoint)
@@ -82,14 +88,14 @@ class Car:
         self.destinationColumn = getColumn(self.destination)
         self.time = abs(self.initialColumn - self.destinationColumn) + abs(self.initialRow - self.destinationRow)
 
-    #Проверка, будет ли машина поворачивать
+    #РџСЂРѕРІРµСЂРєР°, Р±СѓРґРµС‚ Р»Рё РјР°С€РёРЅР° РїРѕРІРѕСЂР°С‡РёРІР°С‚СЊ
     def ifTurning(self):
         if self.initialRow != self.destinationRow and self.initialColumn != self.destinationColumn:
-            self.turning = 1        
+            self.turning = 1
 
 class Field:
-    #Конструктор таблицы поля [номер ячейки, номер машины (0 - отсутствие машины), 
-    #тип дороги (0 - отсутствие дороги, 1 - вертикальная дорога, 2 - горизонтальная дорога, 3 - перекресток)]
+    #РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ С‚Р°Р±Р»РёС†С‹ РїРѕР»СЏ [РЅРѕРјРµСЂ СЏС‡РµР№РєРё, РЅРѕРјРµСЂ РјР°С€РёРЅС‹ (0 - РѕС‚СЃСѓС‚СЃС‚РІРёРµ РјР°С€РёРЅС‹), 
+    #С‚РёРї РґРѕСЂРѕРіРё (0 - РѕС‚СЃСѓС‚СЃС‚РІРёРµ РґРѕСЂРѕРіРё, 1 - РІРµСЂС‚РёРєР°Р»СЊРЅР°СЏ РґРѕСЂРѕРіР°, 2 - РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅР°СЏ РґРѕСЂРѕРіР°, 3 - РїРµСЂРµРєСЂРµСЃС‚РѕРє)]
     def __init__(self, width, height):
         numberOfCell = 0 
         self.width = width
@@ -103,7 +109,7 @@ class Field:
                 c.create_rectangle(i*rectWidth, j*rectWidth, (i+1)*rectWidth, (j+1)*rectWidth, fill = "red")
                 numberOfCell += 1
                 
-    #Создание ячеек дороги
+    #РЎРѕР·РґР°РЅРёРµ СЏС‡РµРµРє РґРѕСЂРѕРіРё
     def makeRoad(self, firstRow, lastRow, firstColumn, lastColumn):
         self.firstRow = firstRow
         self.lastRow = lastRow
@@ -117,7 +123,7 @@ class Field:
             for i in range(self.width):
                 self.table[i][j][2] += 2
                 drawSquare(i, j, "green")
-    #Размещение машин на дороге
+    #Р Р°Р·РјРµС‰РµРЅРёРµ РјР°С€РёРЅ РЅР° РґРѕСЂРѕРіРµ
     def placeCars(self, *cars):
         self.numberOfCar = 1
         self.cars = cars
@@ -126,81 +132,128 @@ class Field:
             self.carColumn = getColumn(self.cars[0][i].initialPoint)
             self.table[self.carColumn][self.carRow][1] = self.numberOfCar
             self.numberOfCar += 1
-            drawSquare(self.carColumn, self.carRow, "blue")
+            drawSquare(self.carColumn, self.carRow, "blue", 'car' + str(i))
             
-                
         
 class MoveTable:
-    #Создание таблицы движения
+    #РЎРѕР·РґР°РЅРёРµ С‚Р°Р±Р»РёС†С‹ РґРІРёР¶РµРЅРёСЏ
     def __init__(self, initialTime, numberOfCars):
         self.numberOfCars = numberOfCars
         self.currentCar = 0
         self.table = [0] * self.numberOfCars
         self.initialTime = initialTime
         self.efficiency = 0
-    #Добавление машины в таблицу и расчет ее движения без учета пересечений с другими машинами
+    #Р”РѕР±Р°РІР»РµРЅРёРµ РјР°С€РёРЅС‹ РІ С‚Р°Р±Р»РёС†Сѓ Рё СЂР°СЃС‡РµС‚ РµРµ РґРІРёР¶РµРЅРёСЏ Р±РµР· СѓС‡РµС‚Р° РїРµСЂРµСЃРµС‡РµРЅРёР№ СЃ РґСЂСѓРіРёРјРё РјР°С€РёРЅР°РјРё
     def addCar(self, car):
         self.car = car
-        self.table[self.currentCar] = [0] * 20 #(car.time + 1)
+        self.table[self.currentCar] = [0] * 20 #(self.car.time + 1)
         self.table[self.currentCar][0] = car.initialPoint
         self.counter = 1
         self.currentRow = car.initialRow
         self.currentColumn = car.initialColumn
         self.currentSpeed = car.speed
-        #Пока не достигли конечной точки
-        while self.currentColumn != car.destinationColumn or self.currentRow != car.destinationRow: 
-            #Если находимся на вертикальном участке
+        #РџРѕРєР° РЅРµ РґРѕСЃС‚РёРіР»Рё РєСЂР°СЏ РїРѕР»СЏ
+        while self.currentColumn > 1 and self.currentRow > 1 and self.currentColumn < widthOfField and self.currentRow < heightOfField: #self.currentColumn != car.destinationColumn or self.currentRow != car.destinationRow: 
+            if self.currentColumn == self.car.destinationColumn and self.currentRow == self.car.destinationRow:
+                self.car.achieved = 1
+            #Р•СЃР»Рё РЅР°С…РѕРґРёРјСЃСЏ РЅР° РІРµСЂС‚РёРєР°Р»СЊРЅРѕРј СѓС‡Р°СЃС‚РєРµ
             if land.table[self.currentColumn][self.currentRow][2] == 1:
-                #Пока номер текущей строки не станет равным номеру целевой
-                while self.currentRow != car.destinationRow:    
-                    #Если номер текущей строки больше целевого    
-                    if self.currentRow > car.destinationRow:
-                        self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] - land.width * self.currentSpeed
-                        self.currentRow -= self.currentSpeed
-                    #Если меньше
+                if self.currentRow > self.car.destinationRow or self.car.achieved:
+                    if self.car.turned:
+                        while self.currentRow > 0:    
+                            self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] - land.width * self.currentSpeed
+                            self.currentRow -= self.currentSpeed
+                            self.counter += 1
+                            self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
                     else:
-                        self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] + land.width * self.currentSpeed
-                        self.currentRow += self.currentSpeed
-                    self.counter += 1
-                    #Проверка приближения к перекрестку
-                    self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
-            #Если находимся на горизонтальном участке
+                        while self.currentRow != self.car.destinationRow:
+                            self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] - land.width * self.currentSpeed
+                            self.currentRow -= self.currentSpeed
+                            self.counter += 1
+                            self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
+                else:
+                    if self.car.turned:
+                        while self.currentRow < heightOfField:
+                            self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] + land.width * self.currentSpeed
+                            self.currentRow += self.currentSpeed
+                            self.counter += 1
+                            self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
+                    else:
+                        while self.currentRow != self.car.destinationRow:
+                            self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] + land.width * self.currentSpeed
+                            self.currentRow += self.currentSpeed
+                            self.counter += 1
+                            self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
+                #РџСЂРѕРІРµСЂРєР° РїСЂРёР±Р»РёР¶РµРЅРёСЏ Рє РїРµСЂРµРєСЂРµСЃС‚РєСѓ
+                self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
+            #Р•СЃР»Рё РЅР°С…РѕРґРёРјСЃСЏ РЅР° РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРј СѓС‡Р°СЃС‚РєРµ
             if land.table[self.currentColumn][self.currentRow][2] == 2:
-                #Пока номер текущего столбца не станет равным номеру целевого
-                 while self.currentColumn != car.destinationColumn:
-                    #Если номер текущего столбца больше целевого
-                    if self.currentColumn > car.destinationColumn:
-                        self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] - self.currentSpeed
-                        self.currentColumn -= self.currentSpeed
-                    #Если меньше
+                if self.currentColumn > self.car.destinationColumn or self.car.achieved:
+                    if self.car.turned:
+                        while self.currentColumn > 0:
+                            self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] - self.currentSpeed
+                            self.currentColumn -= self.currentSpeed
+                            self.counter += 1
+                            self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
                     else:
-                        self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] + self.currentSpeed
-                        self.currentColumn += self.currentSpeed
-                    self.counter += 1
-                    #Проверка приближения к перекрестку
-                    self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
-            #Если находимся на перекрестке
+                        while self.currentColumn != self.car.destinationColumn:
+                            self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] - self.currentSpeed
+                            self.currentColumn -= self.currentSpeed
+                            self.counter += 1
+                            self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
+                else:
+                    if self.car.turned:
+                        while self.currentColumn < widthOfField:
+                            self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] + self.currentSpeed
+                            self.currentColumn += self.currentSpeed
+                            self.counter += 1
+                    else:
+                        while self.currentColumn != self.car.destinationColumn:
+                            self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] + self.currentSpeed
+                            self.currentColumn += self.currentSpeed
+                            self.counter += 1
+                            self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
+                
+            #Р•СЃР»Рё РЅР°С…РѕРґРёРјСЃСЏ РЅР° РїРµСЂРµРєСЂРµСЃС‚РєРµ
             if land.table[self.currentColumn][self.currentRow][2] == 3:
-                #Пока не достигнем целевого столбца ИЛИ целевой строки
-                while self.currentColumn != car.destinationColumn or self.currentRow != car.destinationRow:
-                    #Если номер текущего столбца больше целевого
-                    if self.currentColumn > car.destinationColumn:
+                #РџРѕРєР° РЅРµ РґРѕСЃС‚РёРіРЅРµРј С†РµР»РµРІРѕРіРѕ СЃС‚РѕР»Р±С†Р° РР›Р С†РµР»РµРІРѕР№ СЃС‚СЂРѕРєРё
+                while self.currentColumn != self.car.destinationColumn or self.currentRow != self.car.destinationRow:
+                    #Р•СЃР»Рё РЅРѕРјРµСЂ С‚РµРєСѓС‰РµРіРѕ СЃС‚РѕР»Р±С†Р° Р±РѕР»СЊС€Рµ С†РµР»РµРІРѕРіРѕ
+                    if self.currentColumn > self.car.destinationColumn:
                         self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] - self.currentSpeed
                         self.currentColumn -= self.currentSpeed
-                    #Если меньше
-                    if self.currentColumn < car.destinationColumn:
+                    #Р•СЃР»Рё РјРµРЅСЊС€Рµ
+                    if self.currentColumn < self.car.destinationColumn:
                         self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] + self.currentSpeed
                         self.currentColumn += self.currentSpeed
-                    #Если номер текущей строки больше номера целевой
-                    if self.currentRow > car.destinationRow:
+                    #Р•СЃР»Рё РЅРѕРјРµСЂ С‚РµРєСѓС‰РµР№ СЃС‚СЂРѕРєРё Р±РѕР»СЊС€Рµ РЅРѕРјРµСЂР° С†РµР»РµРІРѕР№
+                    if self.currentRow > self.car.destinationRow:
                         self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] - land.width * self.currentSpeed
                         self.currentRow -= self.currentSpeed
-                    #Если меньше
-                    if self.currentRow < car.destinationRow:
+                    #Р•СЃР»Рё РјРµРЅСЊС€Рµ
+                    if self.currentRow < self.car.destinationRow:
                         self.table[self.currentCar][self.counter] = self.table[self.currentCar][self.counter - 1] + land.width * self.currentSpeed
                         self.currentRow += self.currentSpeed
                     self.counter += 1
+                    self.currentSpeed = checkSpeed(self.currentSpeed, self.currentRow, self.currentColumn)
+                self.car.turned = 1
         self.currentCar += 1
+
+        def optmizeTable(self, table):
+            self.table = table
+            resultTable = [0] * len(self.table)
+            for i in range(len(self.table)):
+                resultTable = [0] * 20
+            
+        
+        def isOptimal(self, table):
+            self.table = table                        
+            for i in range(len(self.table) - 1):
+                for j in range(i + 1, len(self.table)):
+                    for k in range(len(self.table[i])):
+                        if self.table[i][k] == self.table[j][k]:
+                            return False
+            return True
 
 land = Field(widthOfField, heightOfField)
 land.makeRoad(5, 7, 5, 7)
